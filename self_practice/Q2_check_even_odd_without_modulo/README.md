@@ -43,3 +43,47 @@ Decimal -7 = 0b...11001 (two's complement) → LSB = 1 → Odd
 ```
 
 `n & 1` isolates only the LSB. The result is 0 (even) or 1 (odd), regardless of sign, because two's complement preserves the LSB's parity meaning.
+
+---
+
+## Time and Space Complexity
+
+### All Methods
+- **Time:** O(1) — single operation on a fixed-width integer, independent of the value of `n`.
+- **Space:** O(1) — no data structures, no function calls, no heap allocation.
+
+### Micro-performance Analysis (for hardware-aware interviews)
+On x86-64 architecture:
+- `n % 2` compiles to an `IDIV` or `AND` instruction depending on the compiler and optimization level. Modern compilers with `-O2` optimize `% 2` to a bitwise AND automatically, so the difference is often eliminated in optimized builds.
+- `n & 1` always compiles to a single `AND` instruction — one clock cycle, no division unit required.
+- For unoptimized builds (debug mode, `-O0`), `%` involves the integer division circuit (approximately 20–80 cycles on modern Intel CPUs, as the IDIV instruction has a high latency), while `& 1` is always one cycle.
+- At simulation scale relevant to soft matter physics — e.g., checking parity for N=10⁹ lattice sites — this gap can translate to seconds of wall-clock time difference.
+
+---
+
+## Variations and Related Problems
+
+### Variation 1 — Check Divisibility by Powers of 2
+`n % 4 == 0` can be replaced with `(n & 3) == 0` (since 4-1=3=0b11). Generally: `n % (2^k) == 0` ↔ `(n & ((1 << k) - 1)) == 0`. This generalizes parity checking to any power-of-2 modulus.
+
+### Variation 2 — Check if Exactly One of Two Numbers is Odd (XOR Parity)
+`(a ^ b) & 1` — if the result is 1, exactly one of `a` or `b` is odd. This appears in toggle problems and signal processing.
+
+### Variation 3 — Count Odd Numbers in Range [L, R] Without Looping
+`(R - L) / 2 + (L % 2 != 0 ? 1 : 0)` or more cleanly: `(R + 1) / 2 - L / 2`. Tests mathematical reasoning over brute-force iteration.
+
+### Variation 4 — Determine Parity of Number of Set Bits (Even/Odd Parity Bit)
+`__builtin_parity(n)` returns 1 if the number of set bits is odd. This is used in error detection (parity bits in data transmission). The XOR-fold method: `x ^= x >> 16; x ^= x >> 8; x ^= x >> 4; x ^= x >> 2; x ^= x >> 1; result = x & 1`.
+
+### Variation 5 — Alternate Array Elements (Even-index positive, Odd-index negative)
+Uses parity of index `i & 1` to branch on sign assignment, placing this concept in an array-manipulation context.
+
+---
+
+## Key Interview Talking Points
+
+- Knowing that `%` can return a negative value for negative operands in C++ is a genuine gotcha that catches many candidates off guard.
+- Two's complement representation is the reason `& 1` works for negative numbers — this is worth stating explicitly to demonstrate understanding of how integers are stored.
+- The compiler optimization point shows you think about the gap between source code and machine execution — valuable signal for a computational role.
+
+---
